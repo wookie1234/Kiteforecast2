@@ -60,17 +60,12 @@ def get_pressure(city_id):
         st.warning(f"Fehler beim Abrufen des Luftdrucks für {city_id}: {e}")
     return None
 
-# Webcam-Helligkeit
-def check_webcam_visibility():
+# Webcam anzeigen (keine Bildanalyse mehr)
+def show_webcam():
     try:
-        url = "https://www.kiteboarding-reschen.eu/webcam/webcam.jpg"
-        img_data = requests.get(url).content
-        img = Image.open(BytesIO(img_data)).convert("L")
-        brightness = sum(img.getdata()) / (img.width * img.height)
-        return brightness > 100
+        st.image("https://kiteboarding-reschen.eu/webcam-reschenpass/", caption="Live Webcam Reschenpass", use_column_width=True)
     except Exception as e:
         st.warning(f"Webcam nicht verfügbar: {e}")
-        return None
 
 # Streamlit Interface
 st.set_page_config(page_title="Kite Forecast Reschensee", layout="centered")
@@ -81,7 +76,6 @@ mountain_temp_data = get_mountain_temp()
 bozen_pressure = get_pressure("stadt.asp?land=IT&id=11560")
 innsbruck_pressure = get_pressure("stadt.asp?land=AT&id=11115")
 diff_pressure = bozen_pressure - innsbruck_pressure if bozen_pressure and innsbruck_pressure else None
-visibility_ok = check_webcam_visibility()
 
 if forecast_data is None:
     st.stop()
@@ -141,7 +135,7 @@ for date, group in forecast_df.groupby("Date"):
 
     score += len(kite_hours) * 10
 
-    if score >= 50 and visibility_ok:
+    if score >= 50:
         status = "🟢 Go"
     elif score >= 20:
         status = "🟡 Risky"
@@ -154,7 +148,6 @@ for date, group in forecast_df.groupby("Date"):
         "TempDiff_Berg-Tal": delta_temp,
         "KiteableHours": len(kite_hours),
         "PressureDiff": diff_pressure,
-        "WebcamBright": visibility_ok,
         "Score": score,
         "Status": status
     })
@@ -177,4 +170,6 @@ st.pyplot(fig)
 st.markdown(f"**Bozen Druck:** {bozen_pressure} hPa")
 st.markdown(f"**Innsbruck Druck:** {innsbruck_pressure} hPa")
 st.markdown(f"**Druckdifferenz:** {diff_pressure:.2f} hPa" if diff_pressure else "Keine Druckdifferenz verfügbar")
-st.markdown(f"**Webcam Sicht:** {'✅ Klar' if visibility_ok else '❌ Eingetrübt oder Fehler'}")
+
+# Webcam anzeigen
+show_webcam()
